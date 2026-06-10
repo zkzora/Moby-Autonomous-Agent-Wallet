@@ -1,0 +1,88 @@
+/* ════════════════════════════════════════════════════════════════════
+   Moby design tokens — extracted verbatim from landing-v2.html.
+   This file is the single source of truth for the brand identity.
+   Do not introduce raw hex/spacing outside these variables.
+   ════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Canvas */
+  --bg:        #0C0E14;            /* deep obsidian — primary background layer */
+  --surface:   rgba(255, 255, 255, 0.025);
+  --border:    rgba(255, 255, 255, 0.08);
+  --border-hi: rgba(255, 255, 255, 0.14);
+
+  /* Ink ramp */
+  --ink:   #F0F4F8;
+  --ink-2: #8A9BB0;
+  --ink-3: #4A5568;
+
+  /* Capsule pill palette */
+  --lime:   #C8FF00;
+  --orange: #FF6B35;
+  --blue:   #4DA2FF;
+  --purple: #8B5CF6;
+  --red:    #F05252;
+  --green:  #10B981;
+
+  /* Type */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Motion — the brand's single easing voice (no bounce) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Semantic z-index scale (never arbitrary 999/9999) */
+  --z-sticky: 40;
+  --z-nav: 50;
+  --z-overlay: 100;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Thin borders everywhere — the only decoration we need */
+.wire    { border: 1px solid var(--border); }
+.wire-hi { border: 1px solid var(--border-hi); }
+
+/* Mono utility label */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+
+/* Global reduced-motion safety net */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

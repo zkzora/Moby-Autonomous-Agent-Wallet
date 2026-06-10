@@ -1,0 +1,12 @@
+[package]
+name = "moby_policy"
+edition = "2024.beta"
+# version is informational; bump on each published upgrade
+version = "0.1.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+
+[addresses]
+# `0x0` until first publish; the CLI rewrites this with the deployed package id.
+moby = "0x0"

@@ -1,0 +1,720 @@
+/* ════════════════════════════════════════════════════════════════════
+   Component styling. Values preserved verbatim from landing-v2.html;
+   app-shell + stat-strip are new but composed only from existing tokens.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Capsule pill system ─────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.08em 0.52em;
+  border-radius: 999px;
+  font-weight: 600;
+  vertical-align: middle;
+  line-height: 1.35;
+  white-space: nowrap;
+  font-size: 0.88em;
+}
+.pill-lime   { background: var(--lime);   color: #0A0A0A; }
+.pill-orange { background: var(--orange); color: #0A0A0A; }
+.pill-blue   { background: var(--blue);   color: #0A0A0A; }
+.pill-purple { background: var(--purple); color: #fff; }
+.pill-red    { background: var(--red);    color: #fff; }
+.pill-green  { background: var(--green);  color: #04130D; }
+.pill-outline {
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--border-hi);
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  letter-spacing: 0.03em;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  letter-spacing: -0.01em;
+  font-family: var(--font-display);
+  transition: opacity 0.15s ease, transform 0.15s var(--ease-out);
+}
+.btn:hover  { opacity: 0.88; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.btn-solid { background: var(--ink); color: var(--bg); }
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--border-hi);
+}
+.btn-ghost:hover { color: var(--ink); border-color: rgba(255, 255, 255, 0.28); }
+
+/* On-chain emergency switch */
+.btn-revoke {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid rgba(240, 82, 82, 0.32);
+  color: var(--red);
+  background: rgba(240, 82, 82, 0.07);
+  transition: background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.15s var(--ease-out);
+}
+.btn-revoke:not(:disabled):hover {
+  background: rgba(240, 82, 82, 0.14);
+  border-color: rgba(240, 82, 82, 0.55);
+  box-shadow: 0 0 24px rgba(240, 82, 82, 0.18);
+  transform: translateY(-1px);
+}
+.btn-revoke:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.btn-revoke:disabled { opacity: 0.38; cursor: default; }
+
+/* ── App shell ───────────────────────────────────────────────────────── */
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  background: rgba(12, 14, 20, 0.88);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.topbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.brand-glyph {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--blue);
+  display: grid;
+  place-items: center;
+  color: #04101F;
+  font-size: 13px;
+  font-weight: 700;
+}
+.topbar-meta { display: flex; align-items: center; gap: 10px; }
+
+/* Page container */
+.page {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 40px 32px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Section heading */
+.page-head { display: flex; flex-direction: column; gap: 10px; }
+.section-h {
+  font-size: clamp(1.7rem, 2.6vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  text-wrap: balance;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.section-sub {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.7;
+  max-width: 60ch;
+}
+
+/* ── Stat strip — live session metrics ───────────────────────────────── */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.stat-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.stat-card:hover { border-color: var(--border-hi); background: rgba(255, 255, 255, 0.035); }
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.stat-foot { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); }
+
+/* ── Dashboard window ────────────────────────────────────────────────── */
+.dashboard-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.dash-chrome {
+  height: 40px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.01);
+}
+.chrome-dot { width: 9px; height: 9px; border-radius: 50%; }
+.dash-grid { display: grid; grid-template-columns: 320px 1fr; }
+.dash-left {
+  padding: 24px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 420px;
+}
+.dash-right { padding: 24px; display: flex; flex-direction: column; min-height: 420px; }
+
+/* ── Whale tank ──────────────────────────────────────────────────────── */
+.whale-box {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(77, 162, 255, 0.025);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+  transition: background 0.6s ease;
+}
+.whale-box.is-sleeping { background: rgba(138, 155, 176, 0.03); }
+.whale-box.is-revoked  { background: rgba(240, 82, 82, 0.04); }
+.whale-dot-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(77, 162, 255, 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.scan-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(77, 162, 255, 0.5), transparent);
+  animation: scan 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.whale-stage { position: relative; z-index: 1; }
+
+/* Revoke overlay */
+.revoke-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(240, 82, 82, 0.04);
+  z-index: 3;
+}
+
+/* ── Activity log ────────────────────────────────────────────────────── */
+.log-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.log-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  transition: background 0.2s ease;
+}
+.log-row.fresh {
+  background: rgba(77, 162, 255, 0.045);
+  border-color: rgba(77, 162, 255, 0.1);
+  animation: row-in 0.28s var(--ease-out) both;
+}
+.log-badge {
+  flex-shrink: 0;
+  padding: 2px 7px 1px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.log-text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.log-link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 1px;
+  color: var(--ink-3);
+  transition: color 0.15s ease;
+}
+.log-link:hover { color: var(--blue); }
+.log-link svg { display: block; }
+.log-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--ink-3);
+}
+
+/* ── Budget meter ────────────────────────────────────────────────────── */
+.budget { margin-bottom: 20px; }
+.budget-row { display: flex; justify-content: space-between; align-items: baseline; }
+.budget-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); }
+.budget-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.budget-bar-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 8px 0 5px;
+}
+.budget-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s var(--ease-out), background-color 0.4s ease;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+.footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ── Wallet connect (dapp-kit) ───────────────────────────────────────────
+   dapp-kit ships a light theme via `--dapp-kit-*` custom properties scoped to
+   `[data-dapp-kit]`. We restyle the trigger into our dark capsule and retheme
+   the portaled modal/dropdown to the Moby palette. */
+.moby-connect button {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-hi);
+  background: transparent;
+  color: var(--ink-2);
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.moby-connect button:hover {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Retheme the portaled dapp-kit surfaces (modal + account dropdown). */
+:root {
+  --dapp-kit-typography-fontFamily: var(--font-display);
+  --dapp-kit-colors-body: var(--ink);
+  --dapp-kit-colors-bodyMuted: var(--ink-2);
+  --dapp-kit-colors-bodyDanger: var(--red);
+  --dapp-kit-colors-iconButton: var(--ink-2);
+  --dapp-kit-colors-outlineButton: var(--ink-2);
+  --dapp-kit-colors-primaryButton: #04101f;
+  --dapp-kit-backgroundColors-primaryButton: var(--blue);
+  --dapp-kit-backgroundColors-primaryButtonHover: rgba(77, 162, 255, 0.85);
+  --dapp-kit-backgroundColors-outlineButtonHover: rgba(255, 255, 255, 0.04);
+  --dapp-kit-backgroundColors-iconButton: transparent;
+  --dapp-kit-backgroundColors-iconButtonHover: rgba(255, 255, 255, 0.06);
+  --dapp-kit-backgroundColors-modalPrimary: #12141c;
+  --dapp-kit-backgroundColors-modalSecondary: rgba(255, 255, 255, 0.03);
+  --dapp-kit-backgroundColors-modalOverlay: rgba(8, 10, 14, 0.72);
+  --dapp-kit-backgroundColors-walletItemHover: rgba(255, 255, 255, 0.05);
+  --dapp-kit-backgroundColors-walletItemSelected: rgba(255, 255, 255, 0.04);
+  --dapp-kit-backgroundColors-dropdownMenu: #12141c;
+  --dapp-kit-backgroundColors-dropdownMenuSeparator: var(--border);
+  --dapp-kit-borderColors-outlineButton: var(--border-hi);
+  --dapp-kit-radii-small: 8px;
+  --dapp-kit-radii-medium: 10px;
+  --dapp-kit-radii-large: 12px;
+  --dapp-kit-radii-xlarge: 16px;
+}
+
+/* ── Form fields (policy + top-up) ───────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.field-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.field-input::placeholder { color: var(--ink-3); }
+.field-input:focus {
+  border-color: var(--border-hi);
+  background: rgba(255, 255, 255, 0.035);
+}
+.field-input[aria-invalid='true'] { border-color: rgba(240, 82, 82, 0.45); }
+.field-input:disabled { opacity: 0.55; cursor: default; }
+.field-mono { font-family: var(--font-mono); font-size: 12px; letter-spacing: -0.01em; }
+.field-affix { position: relative; display: flex; align-items: center; }
+.field-affix .field-input { padding-right: 54px; }
+.field-suffix {
+  position: absolute;
+  right: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.field-hint {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+.field-hint-err { color: var(--red); }
+
+/* Label row with an inline action (e.g. "Use my wallet"). */
+.field-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.field-link {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.field-link:hover {
+  color: var(--ink);
+  border-bottom-color: var(--border-hi);
+}
+.field-link:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Policy configuration form ──────────────────────────────────────────── */
+.policy-form { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.policy-form-head { display: flex; flex-direction: column; gap: 6px; }
+.policy-form-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.policy-form-sub { font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
+.form-notice {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+.form-notice code { color: var(--blue); }
+.form-notice-err {
+  color: var(--red);
+  border-color: rgba(240, 82, 82, 0.3);
+  background: rgba(240, 82, 82, 0.06);
+}
+.form-notice-err code { color: inherit; }
+.form-connect { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+.policy-deploy { width: 100%; justify-content: center; margin-top: auto; }
+.policy-deploy:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+/* ── Strategy selector (the AI brain) ───────────────────────────────────── */
+.strategy { border: none; margin: 0 0 16px; padding: 0; min-width: 0; }
+.strategy[disabled] { opacity: 0.5; pointer-events: none; }
+.strategy-legend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 0;
+}
+.strategy-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+}
+.strategy-lock svg { display: block; }
+.strategy-options { display: flex; flex-direction: column; gap: 6px; }
+.strategy-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.strategy-opt:hover { border-color: var(--border-hi); background: rgba(255, 255, 255, 0.03); }
+.strategy-opt:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.strategy-opt.is-active {
+  border-color: rgba(77, 162, 255, 0.5);
+  background: rgba(77, 162, 255, 0.06);
+}
+.strategy-dot {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hi);
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+.strategy-opt.is-active .strategy-dot { border-color: var(--blue); }
+.strategy-opt.is-active .strategy-dot::after {
+  content: '';
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.strategy-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.strategy-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.strategy-pair {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.strategy-blurb { font-size: 11.5px; line-height: 1.45; color: var(--ink-2); }
+
+/* ── Policy action rail (top up + revoke) ───────────────────────────────── */
+.policy-actions { display: flex; flex-direction: column; gap: 10px; }
+.topup-row { display: flex; gap: 8px; animation: row-in 0.2s var(--ease-out) both; }
+.topup-row .field-affix { flex: 1; }
+.topup-confirm { padding: 10px 18px; }
+.action-rail { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.action-topup { justify-content: center; font-size: 12.5px; padding: 11px 12px; }
+.action-revoke { width: 100%; }
+.action-error {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--red);
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(240, 82, 82, 0.28);
+  background: rgba(240, 82, 82, 0.06);
+  word-break: break-word;
+}
+
+/* ── Agent execution card (on-chain record_spend) ───────────────────────── */
+.exec-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 16px 0;
+  background: rgba(255, 255, 255, 0.015);
+}
+.exec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.exec-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+.exec-tag {
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.exec-card .budget { margin-bottom: 14px; }
+.exec-trade {
+  width: 100%;
+  justify-content: center;
+  padding: 11px 12px;
+  font-size: 12.5px;
+}
+.exec-auto {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.exec-auto-state {
+  font-size: 11px;
+  color: var(--ink-2);
+  letter-spacing: 0.01em;
+}
+.exec-pause {
+  padding: 6px 14px;
+  font-size: 11.5px;
+  flex-shrink: 0;
+}
+.exec-hint {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin-top: 10px;
+}
+.exec-hint code { font-size: 10.5px; color: var(--ink-2); }
+.exec-success {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--green);
+  margin-top: 10px;
+  animation: row-in 0.25s var(--ease-out) both;
+}
+
+/* Loading placeholder while reading policy from chain */
+.panel-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .stat-strip { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-left { border-right: none; border-bottom: 1px solid var(--border); min-height: 0; }
+  .dash-right { min-height: 0; }
+  .topbar-meta .hide-sm { display: none; }
+}
+@media (max-width: 480px) {
+  .page { padding: 28px 20px 64px; }
+  .topbar-inner { padding: 0 20px; }
+  .footer-inner { padding: 20px; }
+  .stat-strip { grid-template-columns: 1fr; }
+}

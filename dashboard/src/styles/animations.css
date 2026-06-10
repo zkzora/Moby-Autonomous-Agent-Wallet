@@ -1,0 +1,46 @@
+/* ════════════════════════════════════════════════════════════════════
+   Keyframes — preserved verbatim from landing-v2.html.
+   Every motion here conveys agent state, never decoration.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Scan bar sweeping the whale tank during operational states */
+@keyframes scan {
+  0%   { top: 0%;   opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Fresh log row entrance */
+@keyframes row-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Idle bob on the whale tank body */
+@keyframes whale-swim {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+/* Spritesheet playhead. --sheet-w (negative, set inline) = full strip width
+   at display scale; steps(frames) lands each frame on an exact boundary. */
+@keyframes moby-sprite {
+  from { background-position: 0 0; }
+  to   { background-position: var(--sheet-w) 0; }
+}
+
+/* Agent state-text crossfade */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.agent-state { animation: fade-in 0.3s ease; }
+.whale-swim  { animation: whale-swim 1.8s ease-in-out infinite; }
+
+/* Pixelated sprite rendering (no smoothing) */
+.moby-sprite {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
