@@ -58,6 +58,9 @@ export function AgentExecution() {
     usedPct < 40 ? 'var(--green)' : usedPct < 70 ? 'var(--orange)' : 'var(--red)';
 
   const exhausted = remaining <= 0;
+  // True when allowance was reset to 0 (limit=0, spent=0) — agent is resting
+  // waiting for a top-up, not waiting for a reset.
+  const awaitingTopUp = policy.allowanceLimit === 0n && policy.amountSpent === 0n;
   const busy = pending !== null;
   const tradeAmount = Math.min(TRADE_STEP, remaining);
 
@@ -79,7 +82,7 @@ export function AgentExecution() {
   async function handleReset() {
     if (busy || !isOwner) return;
     try {
-      await reset(0); // zero amount_spent → full allowance restored
+      await reset(0); // zero amount_spent and set allowance_limit = 0
       setResetOk(true);
       setTimeout(() => setResetOk(false), 4000);
     } catch {
@@ -127,27 +130,36 @@ export function AgentExecution() {
         <>
           <div className="exec-auto">
             <span className="exec-auto-state mono">
-              Ceiling reached · agent resting
+              {awaitingTopUp
+                ? 'Allowance zeroed · top up to resume'
+                : 'Ceiling reached · agent resting'}
             </span>
           </div>
-          {isOwner ? (
-            <button
-              type="button"
-              className="btn btn-solid exec-trade"
-              onClick={handleReset}
-              disabled={busy}
-            >
-              {pending === 'reset' ? 'Resetting…' : 'Reset & Top Up'}
-            </button>
+          {awaitingTopUp ? (
+            <p className="exec-hint mono">
+              Use <strong>Top Up Allowance</strong> above to open a new budget —
+              the agent resumes automatically once funds are added.
+            </p>
+          ) : isOwner ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-solid exec-trade"
+                onClick={handleReset}
+                disabled={busy}
+              >
+                {pending === 'reset' ? 'Resetting…' : 'Reset Allowance'}
+              </button>
+              <p className="exec-hint mono">
+                Calls <code>reset_policy(0)</code> — zeroes spend and allowance.
+                Top up to open a new budget, then pick a strategy to resume.
+              </p>
+            </>
           ) : (
             <p className="exec-hint mono">
               Only the policy owner can reset the budget.
             </p>
           )}
-          <p className="exec-hint mono">
-            Calls <code>reset_policy</code> — zeroes spend on-chain for a clean
-            slate. Pick a new strategy above, then it resumes automatically.
-          </p>
         </>
       ) : isAutonomous ? (
         <>

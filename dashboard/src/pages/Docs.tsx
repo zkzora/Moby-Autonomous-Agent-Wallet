@@ -14,6 +14,10 @@ const TOC: { id: string; label: string; sub?: boolean }[] = [
   { id: 'policy-layer', label: '1 · On-Chain Policy Layer', sub: true },
   { id: 'wallet-engine', label: '2 · Autonomous Wallet Engine', sub: true },
   { id: 'lifecycle', label: '3 · Policy Lifecycle', sub: true },
+  { id: 'strategies', label: 'Strategy Architecture' },
+  { id: 'strat-arb', label: '1 · Micro-Arbitrage', sub: true },
+  { id: 'strat-snipe', label: '2 · Liquidity Sniping', sub: true },
+  { id: 'strat-dca', label: '3 · Smart DCA Smoothing', sub: true },
   { id: 'deployment', label: 'Deployment' },
 ];
 
@@ -333,7 +337,7 @@ export default function Docs() {
               <span className="step">03</span> Policy Lifecycle
             </h3>
             <p>
-              A policy is governed by its owner across its whole life. The v2
+              A policy is governed by its owner across its whole life. The
               contract adds an in-place recovery path so a demo — or a real
               session — never requires a redeploy.
             </p>
@@ -353,12 +357,13 @@ export default function Docs() {
                 and cannot be undone — by design.
               </li>
               <li>
-                <strong>Reset &amp; Top Up</strong>{' '}
+                <strong>Reset Allowance</strong>{' '}
                 <span className="pill pill-green">recovery</span> — when the budget
                 is exhausted and the agent is resting, <IC>reset_policy</IC> zeroes{' '}
-                <IC>amount_spent</IC> (with an optional ceiling increase) for a
-                clean slate. The owner can switch strategy and the agent resumes —
-                no new object, no redeploy.
+                <IC>amount_spent</IC> and sets the ceiling to its <IC>extra</IC>{' '}
+                argument. Pass <IC>0</IC> for a full reset — the owner then tops up
+                a fresh budget and the agent resumes, all on the same object, no
+                redeploy.
               </li>
             </ul>
             <CodeBlock label="reset_policy">
@@ -371,17 +376,129 @@ export default function Docs() {
               {'  '}
               <Co>// revoke stays permanent</Co>
               {'\n'}    policy.amount_spent = <Nu>0</Nu>;
-              {'\n'}    policy.allowance_limit = policy.allowance_limit + extra;
+              {'\n'}    policy.allowance_limit = extra;
               {'\n'}
               {'}'}
             </CodeBlock>
+          </section>
+
+          {/* Strategy Architecture */}
+          <section className="doc-section" id="strategies">
+            <h2>Strategy Architecture</h2>
+            <p>
+              Moby separates two concerns: an off-chain{' '}
+              <strong>execution layer</strong> that decides <em>when</em> and{' '}
+              <em>how much</em> to trade, and an on-chain{' '}
+              <strong>enforcement layer</strong> that decides{' '}
+              <em>whether it's allowed</em>. Every profile below — whatever its
+              signal — funnels through the same chokepoint: a{' '}
+              <IC>record_spend</IC> call the Move contract validates against the
+              ceiling.
+            </p>
+            <blockquote className="warn">
+              <strong>Testnet scope.</strong> What runs live today is the
+              enforcement loop: the agent autonomously signs real{' '}
+              <IC>record_spend</IC> transactions and the budget depletes on-chain,
+              verifiable on Suiscan. On testnet the trade <em>sizing</em> is
+              simulated to demonstrate that loop end-to-end — the market-reactive
+              signals described below are the execution layer's design and mainnet
+              roadmap, not a claim of live order-book trading.
+            </blockquote>
+
+            <h3 id="strat-arb">
+              <span className="step">01</span> Micro-Arbitrage{' '}
+              <span className="pill pill-blue">SUI/USDC</span>
+            </h3>
+            <p>
+              High-frequency, low-risk capital efficiency — capturing fleeting
+              mispricings before the book re-converges.
+            </p>
+            <ul className="doc-list">
+              <li>
+                <strong>Market trigger.</strong> Sub-second price discrepancies
+                between Deepbook order-book states, or localized price gaps across
+                asset pairs.
+              </li>
+              <li>
+                <strong>Execution logic.</strong> When a profitable gap{' '}
+                <IC>ΔP</IC> exceeds the network gas-fee threshold, the agent
+                triggers a programmatic swap sequence.
+              </li>
+              <li>
+                <strong>Sui integration.</strong> Both legs are compiled into a
+                single <strong>Programmable Transaction Block (PTB)</strong> so the
+                arbitrage executes atomically — either both legs land, or the whole
+                trade reverts.
+              </li>
+            </ul>
+
+            <h3 id="strat-snipe">
+              <span className="step">02</span> Deepbook Liquidity Sniping{' '}
+              <span className="pill pill-purple">CLOB</span>
+            </h3>
+            <p>
+              Capitalizes on sudden market panic or high-momentum events by
+              filling mispriced resting liquidity the instant it appears.
+            </p>
+            <ul className="doc-list">
+              <li>
+                <strong>Market trigger.</strong> Rapid widening of the bid-ask
+                spread, or sudden exhaustion of resting liquidity tiers on
+                Deepbook.
+              </li>
+              <li>
+                <strong>Execution logic.</strong> The agent snipes mispriced
+                liquidity blocks with automated{' '}
+                <strong>Immediate-or-Cancel (IOC)</strong> orders timed to the
+                spread dislocation.
+              </li>
+              <li>
+                <strong>Safety layer.</strong> If the order is not filled instantly
+                within the configured slippage tolerance, it cancels into a safe
+                state rather than resting — preventing toxic order routing.
+              </li>
+            </ul>
+
+            <h3 id="strat-dca">
+              <span className="step">03</span> Smart DCA Smoothing{' '}
+              <span className="pill pill-green">SUI/USDC</span>
+            </h3>
+            <p>
+              Long-term position building with minimal market impact — accumulation
+              that adapts to volatility instead of buying blindly on a fixed clock.
+            </p>
+            <ul className="doc-list">
+              <li>
+                <strong>Market trigger.</strong> Time-interval triggers combined
+                with real-time volatility tracking.
+              </li>
+              <li>
+                <strong>Execution logic.</strong> Rather than buying a fixed size
+                every interval, Moby measures volatility: when it spikes, it delays
+                execution or breaks the order into micro-swaps ("smoothing") for a
+                better average entry.
+              </li>
+              <li>
+                <strong>Ceiling enforcement.</strong> Every micro-swap queries the{' '}
+                <IC>AgentPolicy</IC> shared object, so the total accumulated spend
+                can never cross the owner's defined maximum — the strategy adapts,
+                the ceiling does not.
+              </li>
+            </ul>
+
+            <blockquote>
+              All three strategies share one invariant: no matter how clever the
+              off-chain logic gets, <IC>record_spend</IC> is the only way capital
+              moves — and Move enforces <IC>amount_spent + amount &lt;=
+              allowance_limit</IC> on every single call.
+            </blockquote>
           </section>
 
           {/* Deployment */}
           <section className="doc-section" id="deployment">
             <h2>Deployment</h2>
             <p>
-              Moby's <IC>moby_policy</IC> package (v2) is live on{' '}
+              Moby's <IC>moby_policy</IC> package is live on{' '}
               <strong>Sui Testnet</strong>. All policy actions — create, spend,
               reset, revoke — are real on-chain transactions, each verifiable on
               Suiscan.
@@ -390,7 +507,7 @@ export default function Docs() {
               <div className="docs-card">
                 <h4>Package ID</h4>
                 <p className="docs-addr">
-                  0x11c76b435d2b96e22ce7f589c1ffaca48d88ab745102e73d37e784a9655412b8
+                  0x15e4f45ae7983e6aedf899f7a578617d2ea5c5037c32740b8aaa1d7f40d7de94
                 </p>
               </div>
               <div className="docs-card">

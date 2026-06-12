@@ -5,6 +5,7 @@ import {
   IS_PACKAGE_DEPLOYED,
   MOBY_NETWORK,
   PACKAGE_ID,
+  POLICY_TYPE,
 } from '../lib/moby.config';
 
 /** The live, parsed shape of an on-chain `AgentPolicy` object. */
@@ -89,6 +90,7 @@ export function usePolicyState(
         const data = res.data;
         const content = data?.content;
         if (!data || !content || content.dataType !== 'moveObject') return null;
+        if (content.type !== POLICY_TYPE) return null; // stale package version
         const f = content.fields as unknown as PolicyFields;
         if (f.owner !== owner) return null; // may belong to another account
         return {

@@ -14,7 +14,7 @@ import { STRATEGIES } from '../lib/moby.config';
 export function StrategySelector() {
   const { strategy, setStrategy, status, policy } = usePolicy();
   // Editable before deploy and while the agent is resting (so a new strategy
-  // can be chosen before "Reset & Top Up"); locked only while actively
+  // can be chosen before "Reset Allowance"); locked only while actively
   // executing against a live budget.
   const resting =
     !!policy &&

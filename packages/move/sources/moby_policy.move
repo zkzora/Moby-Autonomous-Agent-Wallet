@@ -149,11 +149,10 @@ public fun top_up_allowance(
     });
 }
 
-/// Owner-only reset: zero the spent counter, restoring the full allowance so a
-/// rested agent can resume against a clean slate — no redeploy needed. Only an
-/// *active* policy can be reset; a revoked one stays severed (the kill-switch
-/// is permanent). Optionally raises the ceiling by `extra` in the same call,
-/// so this doubles as "Reset & Top Up" (pass 0 for a pure reset).
+/// Owner-only reset: zero the spent counter and set the new ceiling to `extra`.
+/// Pass 0 to fully reset allowance (agent rests until the owner tops up again).
+/// Pass a positive value to reset and immediately open a new budget in one call.
+/// Only an *active* policy can be reset; a revoked one stays severed.
 public fun reset_policy(
     policy: &mut AgentPolicy,
     extra: u64,
@@ -163,7 +162,7 @@ public fun reset_policy(
     assert!(policy.is_active, EPolicyRevoked);
 
     policy.amount_spent = 0;
-    policy.allowance_limit = policy.allowance_limit + extra;
+    policy.allowance_limit = extra;
 
     event::emit(PolicyReset {
         policy_id: object::id(policy),
@@ -262,10 +261,10 @@ fun reset_clears_spend_and_can_top_up() {
     sc.next_tx(OWNER);
     {
         let mut policy = sc.take_shared<AgentPolicy>();
-        reset_policy(&mut policy, 50, sc.ctx()); // clear spend + raise ceiling
+        reset_policy(&mut policy, 50, sc.ctx()); // clear spend, new ceiling = extra
         assert!(policy.amount_spent() == 0, 1);
-        assert!(policy.allowance_limit() == 150, 2);
-        assert!(policy.remaining() == 150, 3);
+        assert!(policy.allowance_limit() == 50, 2); // ceiling set to extra, not added
+        assert!(policy.remaining() == 50, 3);
         assert!(policy.is_active(), 4);
         ts::return_shared(policy);
     };

@@ -82,7 +82,7 @@ The `moby_policy` Move package is deployed on **Sui Testnet**.
 | Property | Value |
 |---|---|
 | Network | Sui Testnet |
-| Package ID | `0x11c76b435d2b96e22ce7f589c1ffaca48d88ab745102e73d37e784a9655412b8` |
+| Package ID | `0x15e4f45ae7983e6aedf899f7a578617d2ea5c5037c32740b8aaa1d7f40d7de94` |
 | Chain ID | `4c78adac` |
 
 ### Build & Test Locally
@@ -99,10 +99,25 @@ sui move test
 |---|---|---|
 | `create_policy(agent, allowance_limit)` | anyone (becomes owner) | Creates + shares an `AgentPolicy` |
 | `top_up_allowance(policy, amount)` | owner | Raises the spending ceiling |
+| `reset_policy(policy, extra)` | owner | Zeroes `amount_spent` and sets the ceiling to `extra` (pass `0` to fully reset → owner tops up again) |
 | `revoke_policy(policy)` | owner | Flips `is_active` to false (kill-switch) |
 | `record_spend(policy, amount)` | agent | Records spend, asserts active + under ceiling |
 
 **Errors:** `ENotOwner (0)`, `ENotAgent (1)`, `EPolicyRevoked (2)`, `EBudgetExceeded (3)`, `EZeroAmount (4)`
+
+---
+
+## 🤖 Execution Strategies
+
+> **Scope (testnet):** What's **live and verifiable today** is the on-chain enforcement — Moby's agent keypair autonomously signs real `record_spend` transactions on a timer, so the budget depletes live against the Move-enforced ceiling and every figure is auditable on Suiscan. On testnet the trade sizing is **simulated** to demonstrate that loop end-to-end; the market-reactive logic below is the **execution layer / mainnet roadmap**, not a claim of live order-book trading.
+
+Moby is designed around three execution profiles, each operating strictly within the budget ceiling:
+
+- **Micro-Arbitrage** — Targets sub-second price gaps across Deepbook order books, executing atomic PTBs to capture transient spreads before they re-converge.
+- **Deepbook Liquidity Sniping** — Watches pool depth for volatility and order imbalances, firing IOC (Immediate-or-Cancel) orders the moment spreads widen past threshold.
+- **Smart DCA Smoothing** — Spreads accumulation across volatility to flatten the average entry price, breaking orders into micro-swaps.
+
+> Whatever the profile, execution funnels through a single chokepoint — `record_spend` — and Move enforces `amount_spent + amount <= allowance_limit` on every call. The ceiling cannot be breached, by any strategy. See the [Strategy Architecture docs](dashboard/src/pages/Docs.tsx) for the full breakdown.
 
 ---
 

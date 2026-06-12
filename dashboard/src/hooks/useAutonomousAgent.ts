@@ -7,6 +7,7 @@ import {
   MODULE,
   PACKAGE_ID,
   fromBaseUnits,
+  shortAddress,
   toBaseUnits,
 } from '../lib/moby.config';
 import { getAgentAddress, getAgentKeypair } from '../lib/agentSigner';
@@ -107,15 +108,23 @@ export function useAutonomousAgent(): void {
         }
         await refetchRef.current();
       } catch (e) {
-        // Most likely out of gas or a transient version conflict. Surface the
-        // reason to the feed (a swallowed error makes a dead agent look alive),
-        // then back off for a few ticks and retry — never give up permanently.
         const msg = e instanceof Error ? e.message : String(e);
-        const gasOut = /gas|insufficient|balance|budget|InsufficientCoin/i.test(msg);
+        // A Move abort (e.g. EBudgetExceeded) is a contract decision, NOT a gas
+        // problem — never flag those as "out of gas". Everything else that talks
+        // about gas/coin balance is a real funding shortfall on the agent wallet.
+        // Sui phrases this several ways ("Balance of gas object … is lower than…",
+        // "GasBalanceTooLow", "Could not find enough gas/coins"), so match broadly
+        // but only once a MoveAbort has been ruled out.
+        const isMoveAbort = /MoveAbort|EBudgetExceeded|EPolicyRevoked/i.test(msg);
+        const gasOut =
+          !isMoveAbort &&
+          /gas|InsufficientCoinBalance|GasBalanceTooLow|enough (gas|coins?)|lower than the needed/i.test(
+            msg,
+          );
         publishAgentError(
           gasOut
-            ? 'Agent out of gas — fund the agent wallet to resume execution'
-            : `record_spend failed — ${msg.slice(0, 80)}`,
+            ? `Agent out of gas — fund the agent wallet ${shortAddress(agentAddr)} to resume`
+            : `record_spend failed — ${msg.slice(0, 120)}`,
         );
         fails.current += 1;
         if (fails.current >= 2) {
