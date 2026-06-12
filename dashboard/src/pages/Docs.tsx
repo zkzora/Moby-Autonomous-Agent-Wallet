@@ -84,9 +84,7 @@ export default function Docs() {
       <nav className="lp-nav" aria-label="Documentation navigation">
         <div className="lp-nav-inner" style={{ justifyContent: 'space-between' }}>
           <Link to="/" className="docs-brand">
-            <span className="docs-brand-glyph" aria-hidden="true">
-              M
-            </span>
+            <img className="brand-logo" src="/moby-logo.png" alt="" aria-hidden="true" />
             Moby
           </Link>
           <Link className="docs-back" to="/">
@@ -110,7 +108,6 @@ export default function Docs() {
 
         {/* Content */}
         <main className="docs-content">
-          <div className="docs-eyebrow">Sui Overflow 2025 · Agentic Web</div>
           <h1 className="docs-title">Moby Documentation</h1>
           <p className="docs-lede">
             The autonomous AI agent wallet framework for Sui — where agents trade

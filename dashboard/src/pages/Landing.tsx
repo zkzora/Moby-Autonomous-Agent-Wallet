@@ -59,24 +59,14 @@ function Nav() {
     <nav className="lp-nav" aria-label="Main navigation">
       <div
         className="lp-nav-inner"
-        style={{ justifyContent: 'center', position: 'relative' }}
+        style={{ justifyContent: 'space-between' }}
       >
-        <Link
-          to="/"
-          style={{
-            fontWeight: 700,
-            fontSize: 17,
-            letterSpacing: '-0.02em',
-            color: 'var(--ink)',
-            textDecoration: 'none',
-          }}
-        >
+        <Link className="brand-mark" to="/" aria-label="Moby home">
+          <img className="brand-logo" src="/moby-logo.png" alt="" aria-hidden="true" />
           Moby
         </Link>
         <div
           style={{
-            position: 'absolute',
-            right: 32,
             display: 'flex',
             gap: 12,
             alignItems: 'center',

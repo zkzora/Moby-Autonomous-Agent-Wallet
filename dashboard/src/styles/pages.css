@@ -77,13 +77,6 @@
   font-weight: 700; font-size: 17px; letter-spacing: -0.02em;
   color: var(--ink); text-decoration: none;
 }
-.docs-brand-glyph {
-  width: 26px; height: 26px; border-radius: 7px;
-  display: grid; place-items: center;
-  background: var(--blue); color: #06121F;
-  font-weight: 700; font-size: 15px;
-  image-rendering: pixelated;
-}
 .docs-back {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px; border-radius: 9px;
@@ -132,16 +125,6 @@
 /* ── Docs: reading column ────────────────────────────────────────────── */
 .docs-content { max-width: 760px; min-width: 0; }
 
-.docs-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--blue); margin-bottom: 16px;
-}
-.docs-eyebrow::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--blue);
-}
 .docs-title {
   font-size: clamp(2.2rem, 4vw, 3rem);
   font-weight: 700; line-height: 1.08; letter-spacing: -0.03em;
