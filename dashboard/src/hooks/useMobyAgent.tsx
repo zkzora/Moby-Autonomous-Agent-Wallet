@@ -18,6 +18,7 @@ import {
   type StrategyId,
 } from '../lib/moby.config';
 import { subscribeSpend, subscribeAgentError } from '../lib/spendEvents';
+import { AUTO_PAUSE_KEY } from './useAutonomousAgent';
 
 /** Seed the feed with the opening lines of a strategy's pool. */
 function seedFeed(strategy: StrategyId): LogEntry[] {
@@ -173,6 +174,10 @@ export function MobyAgentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const t = setInterval(() => {
       if (!liveRef.current) return;
+      // Respect the autonomous pause: when paused the real agent stops signing
+      // record_spend, so the cosmetic feed must go quiet too — otherwise it keeps
+      // emitting fake Deepbook rows and the agent looks like it never stopped.
+      if (localStorage.getItem(AUTO_PAUSE_KEY) === '1') return;
       const pool = logsForStrategy(strategyRef.current);
       const tpl = pool[Math.floor(Math.random() * pool.length)];
       setLogs((p) => [{ ...tpl, id: Date.now() }, ...p.slice(0, 8)]);
