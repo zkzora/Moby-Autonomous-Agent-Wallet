@@ -15,29 +15,13 @@ import { DEFAULT_STRATEGY, type StrategyId } from './moby.config';
    line is built dynamically with the exact clamped `record_spend` amount (see
    STRATEGY_SWAP_PHRASES). */
 export const STRATEGY_LOGS: Record<StrategyId, LogTemplate[]> = {
-  'micro-arb': [
-    { type: 'scan',   msg: 'Scanning Deepbook for cross-book price gaps' },
-    { type: 'scan',   msg: 'Best spread 0.11% SUI/USDC — below edge, holding' },
-    { type: 'limit',  msg: 'IOC order resting at best ask' },
+  'reactive-dca': [
+    { type: 'scan',   msg: 'Reading DeepBook DEEP/SUI order book' },
+    { type: 'scan',   msg: 'Scoring spread against entry threshold' },
     { type: 'policy', msg: 'Policy check passed · spend within Move ceiling' },
-    { type: 'scan',   msg: 'Order books re-converged — no edge, waiting' },
-    { type: 'scan',   msg: 'Monitoring tick depth for the next gap' },
-  ],
-  'liquidity-snipe': [
-    { type: 'limit',  msg: 'Resting bid placed @ $1.42 (GTC)' },
-    { type: 'scan',   msg: 'Watching resting liquidity at tick 1.423' },
-    { type: 'scan',   msg: 'Spread widened past threshold — striking' },
-    { type: 'limit',  msg: 'Limit order filled @ $1.423 · 0 slippage' },
-    { type: 'policy', msg: 'Policy check passed · spend within Move ceiling' },
-    { type: 'scan',   msg: 'Bid-ask converging — monitoring depth' },
-  ],
-  'dca-smooth': [
-    { type: 'scan',   msg: 'Volatility elevated — spacing next tranche' },
-    { type: 'scan',   msg: 'Spread favorable — releasing tranche' },
-    { type: 'limit',  msg: 'Resting DCA bid placed @ $1.41' },
-    { type: 'policy', msg: 'Policy check passed · spend within Move ceiling' },
-    { type: 'scan',   msg: 'Flattening entry across volatility window' },
-    { type: 'scan',   msg: 'Holding — waiting for optimal entry' },
+    { type: 'scan',   msg: 'Spread too wide — holding this tick' },
+    { type: 'scan',   msg: 'Tracking best bid/ask for the next entry' },
+    { type: 'scan',   msg: 'Flattening accumulation across volatility' },
   ],
 };
 
@@ -49,9 +33,7 @@ export function logsForStrategy(id: StrategyId): LogTemplate[] {
 /** Strategy-flavoured phrases for a real SWAP line. The caller appends the
  *  exact clamped `record_spend` amount, so every SWAP shows a true figure. */
 export const STRATEGY_SWAP_PHRASES: Record<StrategyId, string[]> = {
-  'micro-arb': ['Arb leg executed', 'Cross-book gap captured', 'Micro-arb fill'],
-  'liquidity-snipe': ['Liquidity sniped', 'Thin ask swept', 'Resting size filled'],
-  'dca-smooth': ['DCA tranche filled', 'Position accumulated', 'Smoothed entry buy'],
+  'reactive-dca': ['DCA tranche filled', 'DEEP accumulated', 'Spread-gated entry buy'],
 };
 
 export function swapPhrasesForStrategy(id: StrategyId): string[] {

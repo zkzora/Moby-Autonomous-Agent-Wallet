@@ -14,7 +14,7 @@ export function PolicyActions() {
   const { revoke: sleepWhale, revoked: simRevoked } = useMobyAgent();
 
   const [topUpOpen, setTopUpOpen] = useState(false);
-  const [amount, setAmount] = useState('100');
+  const [amount, setAmount] = useState('0.5');
 
   const amountNum = Number(amount);
   const amountOk = Number.isFinite(amountNum) && amountNum > 0;
@@ -50,7 +50,7 @@ export function PolicyActions() {
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="100"
+              placeholder="0.5"
               aria-label={`Top-up amount in ${TOKEN_SYMBOL}`}
               autoFocus
               disabled={busy}

@@ -14,11 +14,14 @@ import {
 } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import {
+  CLOCK_ID,
+  DEEP_SUI_POOL,
+  DEEP_TYPE,
   DEFAULT_STRATEGY,
   IS_PACKAGE_DEPLOYED,
   MOBY_NETWORK,
   MODULE,
-  PACKAGE_ID,
+  PACKAGE_CALL_ID,
   toBaseUnits,
   type StrategyId,
 } from '../lib/moby.config';
@@ -35,7 +38,16 @@ export type PolicyStatus =
   | 'revoked'; // policy exists but revoked
 
 /** A pending signature/execution, surfaced so buttons can show progress. */
-export type TxKind = 'create' | 'topup' | 'revoke' | 'spend' | 'reset';
+export type TxKind =
+  | 'create'
+  | 'topup'
+  | 'revoke'
+  | 'spend'
+  | 'withdraw'
+  | 'close';
+
+/** Default policy lifetime (ms) — the on-chain expiry the agent trades within. */
+export const DEFAULT_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
 interface PolicyContextValue {
   status: PolicyStatus;
@@ -55,13 +67,17 @@ interface PolicyContextValue {
   // transactions
   pending: TxKind | null;
   error: string | null;
-  createPolicy: (agent: string, allowanceHuman: number) => Promise<void>;
+  /** Owner: escrow `escrowHuman` SUI as the budget, delegating to `agent`. */
+  createPolicy: (agent: string, escrowHuman: number) => Promise<void>;
+  /** Owner: escrow more SUI, raising the ceiling. */
   topUp: (amountHuman: number) => Promise<void>;
   revoke: () => Promise<void>;
-  /** Owner-only: zero amount_spent (+ optional extra ceiling) for a clean slate. */
-  reset: (extraHuman?: number) => Promise<void>;
-  /** Agent-only: record a spend against the ceiling (depletes the budget). */
-  recordSpend: (amountHuman: number) => Promise<void>;
+  /** Agent-only: real DeepBook swap of `amountHuman` SUI → DEEP, floored by `minBaseOut`. */
+  agentSwap: (amountHuman: number, minBaseOut?: bigint) => Promise<void>;
+  /** Owner: reclaim `amountHuman` SUI of unspent escrow back to the owner. */
+  withdraw: (amountHuman: number) => Promise<void>;
+  /** Owner: drain the vault and close the policy permanently. */
+  close: () => Promise<void>;
   refetch: () => void;
 }
 
@@ -179,13 +195,19 @@ export function PolicyProvider({ children }: { children: ReactNode }) {
   );
 
   const createPolicy = useCallback(
-    async (agent: string, allowanceHuman: number) => {
+    async (agent: string, escrowHuman: number) => {
       await run('create', (tx) => {
+        // Escrow `escrowHuman` SUI split off the gas coin; the escrowed amount
+        // becomes the budget ceiling. Delegate trading on the DEEP/SUI pool.
+        const [funds] = tx.splitCoins(tx.gas, [toBaseUnits(escrowHuman)]);
         tx.moveCall({
-          target: `${PACKAGE_ID}::${MODULE}::create_policy`,
+          target: `${PACKAGE_CALL_ID}::${MODULE}::create_policy`,
           arguments: [
             tx.pure.address(agent),
-            tx.pure.u64(toBaseUnits(allowanceHuman)),
+            tx.pure.id(DEEP_SUI_POOL),
+            tx.pure.u64(BigInt(DEFAULT_DURATION_MS)),
+            funds,
+            tx.object(CLOCK_ID),
           ],
         });
       });
@@ -197,12 +219,10 @@ export function PolicyProvider({ children }: { children: ReactNode }) {
     async (amountHuman: number) => {
       if (!policy) return;
       await run('topup', (tx) => {
+        const [funds] = tx.splitCoins(tx.gas, [toBaseUnits(amountHuman)]);
         tx.moveCall({
-          target: `${PACKAGE_ID}::${MODULE}::top_up_allowance`,
-          arguments: [
-            tx.object(policy.policyId),
-            tx.pure.u64(toBaseUnits(amountHuman)),
-          ],
+          target: `${PACKAGE_CALL_ID}::${MODULE}::top_up_allowance`,
+          arguments: [tx.object(policy.policyId), funds],
         });
       });
     },
@@ -213,45 +233,59 @@ export function PolicyProvider({ children }: { children: ReactNode }) {
     if (!policy) return;
     await run('revoke', (tx) => {
       tx.moveCall({
-        target: `${PACKAGE_ID}::${MODULE}::revoke_policy`,
+        target: `${PACKAGE_CALL_ID}::${MODULE}::revoke_policy`,
         arguments: [tx.object(policy.policyId)],
       });
     });
   }, [run, policy]);
 
-  const recordSpend = useCallback(
-    async (amountHuman: number) => {
+  const agentSwap = useCallback(
+    async (amountHuman: number, minBaseOut: bigint = 0n) => {
       if (!policy) return;
       const res = await run('spend', (tx) => {
         tx.moveCall({
-          target: `${PACKAGE_ID}::${MODULE}::record_spend`,
+          target: `${PACKAGE_CALL_ID}::${MODULE}::agent_swap`,
+          typeArguments: [DEEP_TYPE],
+          arguments: [
+            tx.object(policy.policyId),
+            tx.object(DEEP_SUI_POOL),
+            tx.pure.u64(toBaseUnits(amountHuman)),
+            tx.pure.u64(minBaseOut),
+            tx.object(CLOCK_ID),
+          ],
+        });
+      });
+      // Announce the swap so the feed renders a SWAP row with the real amount.
+      if (res) publishSpend({ amountHuman, digest: res.digest });
+    },
+    [run, policy],
+  );
+
+  const withdraw = useCallback(
+    async (amountHuman: number) => {
+      if (!policy) return;
+      await run('withdraw', (tx) => {
+        tx.moveCall({
+          target: `${PACKAGE_CALL_ID}::${MODULE}::withdraw_unspent`,
           arguments: [
             tx.object(policy.policyId),
             tx.pure.u64(toBaseUnits(amountHuman)),
           ],
         });
       });
-      // Announce the spend so the feed renders a SWAP row with the real amount.
-      if (res) publishSpend({ amountHuman, digest: res.digest });
     },
     [run, policy],
   );
 
-  const reset = useCallback(
-    async (extraHuman = 0) => {
-      if (!policy) return;
-      await run('reset', (tx) => {
-        tx.moveCall({
-          target: `${PACKAGE_ID}::${MODULE}::reset_policy`,
-          arguments: [
-            tx.object(policy.policyId),
-            tx.pure.u64(toBaseUnits(extraHuman)),
-          ],
-        });
+  const close = useCallback(async () => {
+    if (!policy) return;
+    await run('close', (tx) => {
+      tx.moveCall({
+        target: `${PACKAGE_CALL_ID}::${MODULE}::close_policy`,
+        arguments: [tx.object(policy.policyId)],
       });
-    },
-    [run, policy],
-  );
+    });
+  }, [run, policy]);
 
   // The connected wallet is the agent iff it matches the policy's delegate.
   // Sui addresses are canonical-lowercase, but compare defensively.
@@ -285,8 +319,9 @@ export function PolicyProvider({ children }: { children: ReactNode }) {
       createPolicy,
       topUp,
       revoke,
-      recordSpend,
-      reset,
+      agentSwap,
+      withdraw,
+      close,
       refetch,
     }),
     [
@@ -302,8 +337,9 @@ export function PolicyProvider({ children }: { children: ReactNode }) {
       createPolicy,
       topUp,
       revoke,
-      recordSpend,
-      reset,
+      agentSwap,
+      withdraw,
+      close,
       refetch,
     ],
   );

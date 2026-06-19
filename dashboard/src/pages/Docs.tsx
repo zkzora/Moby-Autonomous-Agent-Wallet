@@ -14,10 +14,6 @@ const TOC: { id: string; label: string; sub?: boolean }[] = [
   { id: 'policy-layer', label: '1 · On-Chain Policy Layer', sub: true },
   { id: 'wallet-engine', label: '2 · Autonomous Wallet Engine', sub: true },
   { id: 'lifecycle', label: '3 · Policy Lifecycle', sub: true },
-  { id: 'strategies', label: 'Strategy Architecture' },
-  { id: 'strat-arb', label: '1 · Micro-Arbitrage', sub: true },
-  { id: 'strat-snipe', label: '2 · Liquidity Sniping', sub: true },
-  { id: 'strat-dca', label: '3 · Smart DCA Smoothing', sub: true },
   { id: 'deployment', label: 'Deployment' },
 ];
 
@@ -39,17 +35,11 @@ function CodeBlock({ label, children }: { label: string; children: ReactNode }) 
 const K = ({ children }: { children: ReactNode }) => (
   <span className="tok-key">{children}</span>
 );
-const Fn = ({ children }: { children: ReactNode }) => (
-  <span className="tok-fn">{children}</span>
-);
 const Ty = ({ children }: { children: ReactNode }) => (
   <span className="tok-type">{children}</span>
 );
 const Co = ({ children }: { children: ReactNode }) => (
   <span className="tok-com">{children}</span>
-);
-const Nu = ({ children }: { children: ReactNode }) => (
-  <span className="tok-num">{children}</span>
 );
 const IC = ({ children }: { children: ReactNode }) => (
   <code className="ic">{children}</code>
@@ -218,39 +208,33 @@ export default function Docs() {
               <K>public struct</K> <Ty>AgentPolicy</Ty> <K>has</K> key, store {'{'}
               {'\n'}    id: <Ty>UID</Ty>,{'\n'}    owner: <Ty>address</Ty>,
               {'            '}
-              <Co>// revoke / top-up / reset authority</Co>
+              <Co>// revoke / top-up / withdraw authority</Co>
               {'\n'}    agent: <Ty>address</Ty>,{'            '}
               <Co>// delegated executor</Co>
               {'\n'}    allowance_limit: <Ty>u64</Ty>,{'       '}
-              <Co>// the hard ceiling</Co>
+              <Co>// the hard spend ceiling</Co>
               {'\n'}    amount_spent: <Ty>u64</Ty>,{'          '}
               <Co>{'// cumulative, enforced <= limit'}</Co>
               {'\n'}    is_active: <Ty>bool</Ty>,{'            '}
               <Co>// the kill-switch</Co>
+              {'\n'}    expires_at_ms: <Ty>u64</Ty>,{'         '}
+              <Co>// the agent's time window</Co>
+              {'\n'}    allowed_pool: <Ty>ID</Ty>,{'           '}
+              <Co>// the only pool it may trade</Co>
+              {'\n'}    vault: <Ty>Balance</Ty>&lt;<Ty>SUI</Ty>&gt;,{'       '}
+              <Co>// the escrowed budget</Co>
               {'\n'}
               {'}'}
             </CodeBlock>
             <p>
-              The single chokepoint that enforces the budget on-chain is{' '}
-              <IC>record_spend</IC>. It reverts unless the caller is the delegated
-              agent, the policy is active, and the spend fits under the ceiling —
-              so an over-budget trade is impossible, not merely discouraged:
+              The single chokepoint that moves funds on-chain is{' '}
+              <IC>agent_swap</IC> — a real DeepBook taker swap. It reverts unless
+              the caller is the delegated agent, the policy is active and not
+              expired, the pool matches <IC>allowed_pool</IC>, and the spend fits
+              under the ceiling. All five guards are asserted in Move before a
+              single coin leaves the vault, so an out-of-policy trade is
+              impossible, not merely discouraged.
             </p>
-            <CodeBlock label="record_spend">
-              <K>public fun</K> <Fn>record_spend</Fn>(policy: &<K>mut</K>{' '}
-              <Ty>AgentPolicy</Ty>, amount: <Ty>u64</Ty>, ctx: &<Ty>TxContext</Ty>){' '}
-              {'{'}
-              {'\n'}    <Fn>assert!</Fn>(ctx.<Fn>sender</Fn>() =={' '}
-              policy.agent, <Ty>ENotAgent</Ty>);
-              {'\n'}    <Fn>assert!</Fn>(policy.is_active, <Ty>EPolicyRevoked</Ty>);
-              {'\n'}    <Fn>assert!</Fn>(
-              {'\n'}        {'policy.amount_spent + amount <= policy.allowance_limit,'}
-              {'\n'}        <Ty>EBudgetExceeded</Ty>,
-              {'\n'}    );
-              {'\n'}    policy.amount_spent = policy.amount_spent + amount;
-              {'\n'}
-              {'}'}
-            </CodeBlock>
             <blockquote>
               Because the ceiling is enforced in Move, the dashboard's budget
               meter is not a guard — it is a <em>mirror</em> of on-chain truth.
@@ -265,8 +249,8 @@ export default function Docs() {
               To make the agent truly autonomous — no wallet popups — the dApp
               holds a dedicated <strong>Ed25519 agent keypair</strong>. When a
               policy delegates to that agent address, the engine signs{' '}
-              <IC>record_spend</IC> itself on a fixed cadence, debiting the
-              on-chain ceiling as it "trades."
+              <IC>agent_swap</IC> itself on a fixed cadence, executing real
+              DeepBook swaps as it trades.
             </p>
             <blockquote className="warn">
               <strong>Testnet only.</strong> The agent key is a low-value,
@@ -275,71 +259,24 @@ export default function Docs() {
               is bounded by design.
             </blockquote>
             <p>
-              <strong>Budget clamping.</strong> Before every signature, the
-              generated trade amount is clamped to the remaining allowance. This
-              guarantees the final trade lands <em>exactly</em> on the ceiling —
-              e.g. with 2 USDC left, a generated 6 becomes 2, for a clean finish —
-              and the agent then stops:
+              <strong>The brain is a rule-based scorer</strong> — no LLM, no black
+              box. Each tick it reads the live DeepBook DEEP/SUI order book, scores
+              the bid-ask spread <strong>0–100</strong>, and accumulates a fixed
+              SUI tranche only when the spread is tight enough — otherwise it skips
+              with a plain-text reason printed to the feed. The scorer also derives
+              the on-chain <IC>min_base_out</IC> slippage floor from the live best
+              ask. One strategy runs: <strong>Reactive DCA</strong> (see{' '}
+              <IC>strategy.ts</IC>). A swap below the pool's minimum order size
+              fills nothing, so once the remaining budget can't cover one tranche
+              the agent rests; the owner can top up or reclaim the unspent dust.
             </p>
-            <CodeBlock label="useAutonomousAgent.ts">
-              <K>const</K> remaining = policy.allowanceLimit - policy.amountSpent;
-              {'\n'}
-              <K>if</K> {'(remaining <= '}
-              <Nu>0n</Nu>
-              {') '}
-              <K>return</K>;{'            '}
-              <Co>{'// strict stop -> Resting'}</Co>
-              {'\n\n'}
-              <K>const</K> generated = <Fn>toBaseUnits</Fn>(randomTradeSize());
-              {'\n'}
-              <Co>// clamp: never overshoot — perfect finish on the last trade</Co>
-              {'\n'}
-              <K>const</K> amount = generated {'>'} remaining ? remaining :
-              generated;
-              {'\n\n'}
-              <K>await</K> client.<Fn>signAndExecuteTransaction</Fn>({'{'} signer:
-              agentKeypair, transaction {'}'});
-              {'\n'}
-              <K>await</K> client.<Fn>waitForTransaction</Fn>({'{'} digest {'}'});
-              {'  '}
-              <Co>// read-after-write</Co>
-              {'\n'}
-              <K>await</K> <Fn>refetchPolicy</Fn>();{'                       '}
-              <Co>// live UI re-sync</Co>
-            </CodeBlock>
-            <p>
-              <strong>Strategy templates.</strong> The agent's "brain" is an
-              off-chain strategy config (the contract enforces the budget; the
-              strategy shapes the behaviour). One strategy runs at a time:
-            </p>
-            <div className="docs-card-grid">
-              <div className="docs-card">
-                <h4>
-                  Micro-Arbitrage <span className="mono">SUI/USDC</span>
-                </h4>
-                <p>Captures sub-second price gaps across Deepbook order books.</p>
-              </div>
-              <div className="docs-card">
-                <h4>
-                  Deepbook Liquidity Sniping <span className="mono">CLOB</span>
-                </h4>
-                <p>Fills resting size the instant spreads widen past threshold.</p>
-              </div>
-              <div className="docs-card">
-                <h4>
-                  Smart DCA Smoothing <span className="mono">SUI/USDC</span>
-                </h4>
-                <p>Spreads accumulation across volatility to flatten entry price.</p>
-              </div>
-            </div>
 
             <h3 id="lifecycle">
               <span className="step">03</span> Policy Lifecycle
             </h3>
             <p>
-              A policy is governed by its owner across its whole life. The
-              contract adds an in-place recovery path so a demo — or a real
-              session — never requires a redeploy.
+              A policy is governed by its owner across its whole life — pause,
+              top up, sever, or reclaim, all on the same shared object.
             </p>
             <ul className="doc-list">
               <li>
@@ -352,146 +289,19 @@ export default function Docs() {
                 <strong>Revoke</strong>{' '}
                 <span className="pill pill-red">kill-switch</span> —{' '}
                 <IC>revoke_policy</IC> flips <IC>is_active</IC> to{' '}
-                <IC>false</IC> permanently. Any further <IC>record_spend</IC>{' '}
+                <IC>false</IC> permanently. Any further <IC>agent_swap</IC>{' '}
                 aborts with <IC>EPolicyRevoked</IC>. This severance has no cooldown
                 and cannot be undone — by design.
               </li>
               <li>
-                <strong>Reset Allowance</strong>{' '}
-                <span className="pill pill-green">recovery</span> — when the budget
-                is exhausted and the agent is resting, <IC>reset_policy</IC> zeroes{' '}
-                <IC>amount_spent</IC> and sets the ceiling to its <IC>extra</IC>{' '}
-                argument. Pass <IC>0</IC> for a full reset — the owner then tops up
-                a fresh budget and the agent resumes, all on the same object, no
-                redeploy.
+                <strong>Reclaim / Close</strong>{' '}
+                <span className="pill pill-green">recovery</span> — escrowed funds
+                are never locked. <IC>withdraw_unspent</IC> returns any unspent SUI
+                to the owner (re-pegging the ceiling), and <IC>close_policy</IC>{' '}
+                drains the whole vault and severs the agent in one call — useful for
+                reclaiming dust below the pool's minimum order size.
               </li>
             </ul>
-            <CodeBlock label="reset_policy">
-              <K>public fun</K> <Fn>reset_policy</Fn>(policy: &<K>mut</K>{' '}
-              <Ty>AgentPolicy</Ty>, extra: <Ty>u64</Ty>, ctx: &<Ty>TxContext</Ty>){' '}
-              {'{'}
-              {'\n'}    <Fn>assert!</Fn>(ctx.<Fn>sender</Fn>() =={' '}
-              policy.owner, <Ty>ENotOwner</Ty>);
-              {'\n'}    <Fn>assert!</Fn>(policy.is_active, <Ty>EPolicyRevoked</Ty>);
-              {'  '}
-              <Co>// revoke stays permanent</Co>
-              {'\n'}    policy.amount_spent = <Nu>0</Nu>;
-              {'\n'}    policy.allowance_limit = extra;
-              {'\n'}
-              {'}'}
-            </CodeBlock>
-          </section>
-
-          {/* Strategy Architecture */}
-          <section className="doc-section" id="strategies">
-            <h2>Strategy Architecture</h2>
-            <p>
-              Moby separates two concerns: an off-chain{' '}
-              <strong>execution layer</strong> that decides <em>when</em> and{' '}
-              <em>how much</em> to trade, and an on-chain{' '}
-              <strong>enforcement layer</strong> that decides{' '}
-              <em>whether it's allowed</em>. Every profile below — whatever its
-              signal — funnels through the same chokepoint: a{' '}
-              <IC>record_spend</IC> call the Move contract validates against the
-              ceiling.
-            </p>
-            <blockquote className="warn">
-              <strong>Testnet scope.</strong> What runs live today is the
-              enforcement loop: the agent autonomously signs real{' '}
-              <IC>record_spend</IC> transactions and the budget depletes on-chain,
-              verifiable on Suiscan. On testnet the trade <em>sizing</em> is
-              simulated to demonstrate that loop end-to-end — the market-reactive
-              signals described below are the execution layer's design and mainnet
-              roadmap, not a claim of live order-book trading.
-            </blockquote>
-
-            <h3 id="strat-arb">
-              <span className="step">01</span> Micro-Arbitrage{' '}
-              <span className="pill pill-blue">SUI/USDC</span>
-            </h3>
-            <p>
-              High-frequency, low-risk capital efficiency — capturing fleeting
-              mispricings before the book re-converges.
-            </p>
-            <ul className="doc-list">
-              <li>
-                <strong>Market trigger.</strong> Sub-second price discrepancies
-                between Deepbook order-book states, or localized price gaps across
-                asset pairs.
-              </li>
-              <li>
-                <strong>Execution logic.</strong> When a profitable gap{' '}
-                <IC>ΔP</IC> exceeds the network gas-fee threshold, the agent
-                triggers a programmatic swap sequence.
-              </li>
-              <li>
-                <strong>Sui integration.</strong> Both legs are compiled into a
-                single <strong>Programmable Transaction Block (PTB)</strong> so the
-                arbitrage executes atomically — either both legs land, or the whole
-                trade reverts.
-              </li>
-            </ul>
-
-            <h3 id="strat-snipe">
-              <span className="step">02</span> Deepbook Liquidity Sniping{' '}
-              <span className="pill pill-purple">CLOB</span>
-            </h3>
-            <p>
-              Capitalizes on sudden market panic or high-momentum events by
-              filling mispriced resting liquidity the instant it appears.
-            </p>
-            <ul className="doc-list">
-              <li>
-                <strong>Market trigger.</strong> Rapid widening of the bid-ask
-                spread, or sudden exhaustion of resting liquidity tiers on
-                Deepbook.
-              </li>
-              <li>
-                <strong>Execution logic.</strong> The agent snipes mispriced
-                liquidity blocks with automated{' '}
-                <strong>Immediate-or-Cancel (IOC)</strong> orders timed to the
-                spread dislocation.
-              </li>
-              <li>
-                <strong>Safety layer.</strong> If the order is not filled instantly
-                within the configured slippage tolerance, it cancels into a safe
-                state rather than resting — preventing toxic order routing.
-              </li>
-            </ul>
-
-            <h3 id="strat-dca">
-              <span className="step">03</span> Smart DCA Smoothing{' '}
-              <span className="pill pill-green">SUI/USDC</span>
-            </h3>
-            <p>
-              Long-term position building with minimal market impact — accumulation
-              that adapts to volatility instead of buying blindly on a fixed clock.
-            </p>
-            <ul className="doc-list">
-              <li>
-                <strong>Market trigger.</strong> Time-interval triggers combined
-                with real-time volatility tracking.
-              </li>
-              <li>
-                <strong>Execution logic.</strong> Rather than buying a fixed size
-                every interval, Moby measures volatility: when it spikes, it delays
-                execution or breaks the order into micro-swaps ("smoothing") for a
-                better average entry.
-              </li>
-              <li>
-                <strong>Ceiling enforcement.</strong> Every micro-swap queries the{' '}
-                <IC>AgentPolicy</IC> shared object, so the total accumulated spend
-                can never cross the owner's defined maximum — the strategy adapts,
-                the ceiling does not.
-              </li>
-            </ul>
-
-            <blockquote>
-              All three strategies share one invariant: no matter how clever the
-              off-chain logic gets, <IC>record_spend</IC> is the only way capital
-              moves — and Move enforces <IC>amount_spent + amount &lt;=
-              allowance_limit</IC> on every single call.
-            </blockquote>
           </section>
 
           {/* Deployment */}
@@ -499,15 +309,15 @@ export default function Docs() {
             <h2>Deployment</h2>
             <p>
               Moby's <IC>moby_policy</IC> package is live on{' '}
-              <strong>Sui Testnet</strong>. All policy actions — create, spend,
-              reset, revoke — are real on-chain transactions, each verifiable on
-              Suiscan.
+              <strong>Sui Testnet</strong>. All policy actions — create, swap, top
+              up, revoke, withdraw — are real on-chain transactions, each
+              verifiable on Suiscan.
             </p>
             <div className="docs-card-grid">
               <div className="docs-card">
                 <h4>Package ID</h4>
                 <p className="docs-addr">
-                  0x15e4f45ae7983e6aedf899f7a578617d2ea5c5037c32740b8aaa1d7f40d7de94
+                  0x3b634fb9f0f3ed3f6753dbddb743cf40304b0e11eee0b1346161af9f4304a508
                 </p>
               </div>
               <div className="docs-card">
@@ -517,10 +327,11 @@ export default function Docs() {
             </div>
             <p>
               The contract exposes the owner/agent entry points —{' '}
-              <IC>create_policy</IC>, <IC>record_spend</IC>,{' '}
-              <IC>top_up_allowance</IC>, <IC>reset_policy</IC>, and{' '}
-              <IC>revoke_policy</IC> — each guarded by explicit <IC>assert!</IC>{' '}
-              authority checks and covered by the package test suite.
+              <IC>create_policy</IC>, <IC>agent_swap</IC>,{' '}
+              <IC>top_up_allowance</IC>, <IC>withdraw_unspent</IC>,{' '}
+              <IC>close_policy</IC>, and <IC>revoke_policy</IC> — each guarded by
+              explicit <IC>assert!</IC> authority checks and covered by the package
+              test suite.
             </p>
             <blockquote>
               Connect a Sui testnet wallet, grant an allowance, and watch Moby

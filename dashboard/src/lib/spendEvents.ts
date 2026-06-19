@@ -48,3 +48,21 @@ export function subscribeAgentError(listener: ErrListener): () => void {
     errListeners.delete(listener);
   };
 }
+
+/* ── Agent reasoning channel ─────────────────────────────────────────────────
+   The rule-based scorer emits a plain-text rationale each tick (its 0–100 score
+   + decision). Surface it to the feed as a SCAN line so the agent's "thinking"
+   is visible and auditable — not a black box. */
+type NoteListener = (message: string) => void;
+const noteListeners = new Set<NoteListener>();
+
+export function publishAgentNote(message: string): void {
+  for (const l of noteListeners) l(message);
+}
+
+export function subscribeAgentNote(listener: NoteListener): () => void {
+  noteListeners.add(listener);
+  return () => {
+    noteListeners.delete(listener);
+  };
+}

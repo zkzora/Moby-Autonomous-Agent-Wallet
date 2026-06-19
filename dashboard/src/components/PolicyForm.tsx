@@ -20,7 +20,7 @@ function isValidSuiAddress(addr: string): boolean {
  */
 export function PolicyForm() {
   const { status, createPolicy, pending, error, address } = usePolicy();
-  const [allowance, setAllowance] = useState('500');
+  const [allowance, setAllowance] = useState('2');
   const [agent, setAgent] = useState(DEFAULT_AGENT_ADDRESS);
 
   // Single-wallet demo affordance: delegate to the connected wallet so the
@@ -61,20 +61,20 @@ export function PolicyForm() {
         </h2>
         <p className="policy-form-sub">
           {revoked
-            ? 'The previous capability was destroyed on-chain. Deploy a new ceiling to re-delegate.'
-            : 'Set a hard spend ceiling and the agent it governs. Funds never leave your wallet.'}
+            ? 'The previous capability was destroyed on-chain. Deploy a new policy to re-delegate.'
+            : 'Escrow a SUI budget and pick the agent it governs. Funds stay in the policy and only move via Move-gated DeepBook swaps.'}
         </p>
       </div>
 
       <label className="field">
-        <span className="field-label">Allowance limit ({TOKEN_SYMBOL})</span>
+        <span className="field-label">Escrow budget ({TOKEN_SYMBOL})</span>
         <div className="field-affix">
           <input
             className="field-input"
             inputMode="decimal"
             value={allowance}
             onChange={(e) => setAllowance(e.target.value)}
-            placeholder="500"
+            placeholder="2"
             aria-invalid={!allowanceOk}
             disabled={busy}
           />

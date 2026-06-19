@@ -16,6 +16,12 @@ export interface OnChainPolicy {
   allowanceLimit: bigint;
   amountSpent: bigint;
   isActive: boolean;
+  /** Escrowed SUI remaining in the policy vault (base units). */
+  vault: bigint;
+  /** Epoch-ms after which `agent_swap` aborts. */
+  expiresAtMs: bigint;
+  /** The only DeepBook pool the agent may trade. */
+  allowedPool: string;
 }
 
 /** Raw Move object field shape returned by `getObject` for an AgentPolicy. */
@@ -25,6 +31,9 @@ interface PolicyFields {
   allowance_limit: string;
   amount_spent: string;
   is_active: boolean;
+  vault: string;
+  expires_at_ms: string;
+  allowed_pool: string;
 }
 
 /** Raw `PolicyCreated` event payload. */
@@ -100,6 +109,9 @@ export function usePolicyState(
           allowanceLimit: BigInt(f.allowance_limit),
           amountSpent: BigInt(f.amount_spent),
           isActive: Boolean(f.is_active),
+          vault: BigInt(f.vault),
+          expiresAtMs: BigInt(f.expires_at_ms),
+          allowedPool: f.allowed_pool,
         };
       };
 

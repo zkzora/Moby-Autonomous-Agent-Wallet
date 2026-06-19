@@ -446,7 +446,7 @@ const FEATS: Feat[] = [
     tag: 'Deepbook',
     tagC: 'blue',
     title: 'Autonomous Execution',
-    body: "Moby places limit orders, sweeps spreads, and captures micro-arb on Deepbook's Central Limit Order Book. Entirely on-chain.",
+    body: "Moby scores the live Deepbook spread each tick and executes real swaps on its Central Limit Order Book — only when the entry is favourable. Entirely on-chain.",
     meta: 'CLOB native · No custody',
   },
   {

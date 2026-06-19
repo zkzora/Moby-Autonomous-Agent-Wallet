@@ -17,7 +17,11 @@ import {
   TOKEN_SYMBOL,
   type StrategyId,
 } from '../lib/moby.config';
-import { subscribeSpend, subscribeAgentError } from '../lib/spendEvents';
+import {
+  subscribeSpend,
+  subscribeAgentError,
+  subscribeAgentNote,
+} from '../lib/spendEvents';
 import { AUTO_PAUSE_KEY } from './useAutonomousAgent';
 
 /** Seed the feed with the opening lines of a strategy's pool. */
@@ -134,6 +138,21 @@ export function MobyAgentProvider({ children }: { children: ReactNode }) {
       setTradeCount((n) => n + 1);
       setEating(true);
       setTimeout(() => setEating(false), EAT_DURATION_MS);
+    });
+  }, []);
+
+  // Surface the rule-based scorer's per-tick rationale as a SCAN line, so the
+  // agent's decision (and 0–100 score) is visible. Deduped against the last note
+  // so identical "skip" reasons don't spam consecutive rows.
+  const lastNoteRef = useRef<string | null>(null);
+  useEffect(() => {
+    return subscribeAgentNote((message) => {
+      if (lastNoteRef.current === message) return;
+      lastNoteRef.current = message;
+      setLogs((p) => [
+        { id: Date.now(), type: 'scan' as LogType, msg: message },
+        ...p.slice(0, 8),
+      ]);
     });
   }, []);
 

@@ -5,7 +5,18 @@ edition = "2024.beta"
 version = "0.1.0"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+# Sui framework is auto-added for the package's environment, so it is NOT
+# declared explicitly — that avoids a version clash with DeepBook's own Sui pin.
+#
+# Pinned to an exact commit (not `main`) for reproducible resolution. NOTE: this
+# commit's Published.toml records the testnet deploy as v19 (0x74cd56…), which the
+# DeepBook team has since DISABLED on-chain in favour of the active version
+# 0x22be4c… (a v20 deploy not yet committed to the public deepbookv3 repo). Build
+# and test work as-is (they compile against the type-origin 0xfb28c4… and never
+# execute a live swap), but RE-PUBLISHING must re-point the dependency's
+# published-at to the active version — run `scripts/fix-deepbook-published-at.sh`
+# before `sui client publish`. See packages/move/README.md.
+deepbook = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/deepbook", rev = "5411ef3aa93f7722409b2a85047baa3d4d830c07" }
 
 [addresses]
 # `0x0` until first publish; the CLI rewrites this with the deployed package id.
