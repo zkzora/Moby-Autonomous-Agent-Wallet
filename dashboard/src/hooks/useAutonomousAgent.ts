@@ -75,6 +75,14 @@ export function useAutonomousAgent(): void {
       // Only autonomous when the policy actually delegates to THIS agent.
       if (p.agent.toLowerCase() !== agentAddr.toLowerCase()) return;
 
+      // Expiry is enforced on-chain (agent_swap aborts EPolicyExpired). Check it
+      // client-side too so we don't fire doomed txs every tick — rest and surface
+      // a clear note instead (deduped, so it prints once).
+      if (Date.now() >= Number(p.expiresAtMs)) {
+        publishAgentNote('🤖 Policy expired — reclaim escrow & redeploy to resume');
+        return;
+      }
+
       // Each swap spends a fixed tranche; below the DeepBook min order size a
       // swap fills nothing, so once the remaining budget can't cover one tranche
       // the agent rests rather than emit a no-op trade.

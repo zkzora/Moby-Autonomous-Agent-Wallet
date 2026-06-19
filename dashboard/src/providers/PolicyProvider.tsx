@@ -47,7 +47,7 @@ export type TxKind =
   | 'close';
 
 /** Default policy lifetime (ms) — the on-chain expiry the agent trades within. */
-export const DEFAULT_DURATION_MS = 60 * 60 * 1000; // 1 hour
+export const DEFAULT_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface PolicyContextValue {
   status: PolicyStatus;

@@ -54,6 +54,8 @@ export function AgentExecution() {
   const busy = pending !== null;
   // Unspent SUI still escrowed in the vault — reclaimable by the owner.
   const reclaimable = fromBaseUnits(policy.vault);
+  // On-chain expiry elapsed — agent_swap aborts (EPolicyExpired) until redeploy.
+  const expired = Number(policy.expiresAtMs) <= Date.now();
 
   function togglePause() {
     const next = !paused;
@@ -115,7 +117,32 @@ export function AgentExecution() {
         </div>
       </div>
 
-      {exhausted ? (
+      {expired ? (
+        <>
+          <div className="exec-auto">
+            <span className="exec-auto-state mono">
+              Policy expired · agent stopped
+            </span>
+          </div>
+          {isOwner && reclaimable > 0 && (
+            <button
+              type="button"
+              className="btn btn-solid exec-trade"
+              onClick={handleClose}
+              disabled={busy}
+            >
+              {pending === 'close'
+                ? 'Reclaiming…'
+                : `Reclaim ${reclaimable} ${TOKEN_SYMBOL} & close`}
+            </button>
+          )}
+          <p className="exec-hint mono">
+            The policy's time window elapsed — <code>agent_swap</code> now aborts
+            (EPolicyExpired). Reclaim the escrow and deploy a fresh policy to
+            resume.
+          </p>
+        </>
+      ) : exhausted ? (
         <>
           <div className="exec-auto">
             <span className="exec-auto-state mono">
