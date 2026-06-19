@@ -35,16 +35,31 @@ npm run preview    # serve the build
 | Dashboard window | `src/components/CommandCenter.tsx` + `ChromeBar` |
 | Shell | `src/components/{TopBar,Footer,StatStrip}.tsx`, `src/App.tsx` |
 
-## Core behaviours
+## Architecture
 
-- **Live stream** emits a Deepbook event every 2.4s; `swap` rows deduct a random
-  5–16 USDC from the 500-USDC ceiling; the top row flashes `.fresh`.
-- **Budget depletion** transitions the meter green → orange → red. At exactly 0
-  it pushes a policy-ceiling-hit log and the agent suspends.
-- **Revoke** (kill-switch) destroys the capability object, freezes the agent,
-  and drops a crimson `ACCESS REVOKED` overlay over the tank.
-- **Sleep** (budget dry or revoked) forces the whale grayscale with floating
-  pixelated `Z`s.
-- **Pause/resume** from the top bar halts execution without revoking.
+| Layer | Description |
+| --- | --- |
+| Move contract | `moby_policy` package — `AgentPolicy` shared object with vault, ceiling, expiry, pool scope |
+| Agent engine | Rule-based Reactive DCA scorer reads DeepBook order book live, executes `agent_swap` |
+| Dashboard | React + TypeScript — renders live on-chain state, owner controls |
+
+## On-chain mechanics
+
+- **`agent_swap`** is the single fund egress: 5 Move asserts (agent-only,
+  active, not-expired, pool-locked, under-ceiling) → split vault → real
+  DeepBook taker swap → emit `SpendRecorded`.
+- **`revoke_policy`** sets `is_active = false` permanently. Any subsequent
+  `agent_swap` aborts with `EPolicyRevoked`.
+- **`withdraw_unspent`** / **`close_policy`** let the owner reclaim escrowed
+  SUI at any time — non-custodial by design.
+- Strategy: **Reactive DCA** — scores bid-ask spread 0–100, executes when
+  score ≥ 40, derives `min_base_out` from live best-ask (5% slippage floor).
+
+## Verified on-chain
+
+- Swap: `F86Hpob3s8yzRdroTKrUL6eS1WMk94AnUyF4ghP17WMv`
+  — DEEP +10, OrderFilled (DeepBook), SpendRecorded (Moby)
+- Package: `0x3b634fb9f0f3ed3f6753dbddb743cf40304b0e11eee0b1346161af9f4304a508`
+- Network: Sui Testnet
 
 Brand identity is documented in [`brand.md`](./brand.md).

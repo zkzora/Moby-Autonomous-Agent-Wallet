@@ -24,16 +24,16 @@ interface DemoLog {
 }
 
 const LOG_POOL: { type: LogKind; msg: string }[] = [
-  { type: 'swap', msg: 'Swapped 10 USDC → SUI via Deepbook CLOB | Budget left: 490/500 USDC' },
-  { type: 'scan', msg: 'Scanning order books — best spread: 0.11% SUI/USDC' },
-  { type: 'swap', msg: 'Swapped 8 SUI → USDC · slippage 0.09% | Budget left: 478/500 USDC' },
-  { type: 'limit', msg: 'Limit order placed: BUY 15 SUI @ $1.42 (GTC) on Deepbook' },
-  { type: 'scan', msg: 'Evaluating liquidity at tick 1.423 — shallow, holding' },
-  { type: 'swap', msg: 'CLOB sweep: 12 USDC → SUI | Budget left: 463/500 USDC' },
-  { type: 'policy', msg: 'Policy check passed · 463 / 500 USDC consumed' },
-  { type: 'swap', msg: 'Micro-arb: 6 SUI → USDC · net +$0.09 | Budget left: 450/500 USDC' },
-  { type: 'limit', msg: 'Limit order filled: 15 SUI @ $1.423 · 0 slippage' },
-  { type: 'scan', msg: 'Bid-ask converging — monitoring, no action' },
+  { type: 'scan', msg: 'Reading DEEP/SUI order book — spread: 0.82%, score: 59' },
+  { type: 'swap', msg: 'Reactive DCA: 0.25 SUI → 10 DEEP via DeepBook CLOB' },
+  { type: 'scan', msg: 'Spread widening — 4.1%, score: 18 · holding position' },
+  { type: 'policy', msg: 'Policy check: 0.25/1.00 SUI spent · ceiling intact' },
+  { type: 'swap', msg: 'Conditions met — executing agent_swap · min_out: 9 DEEP' },
+  { type: 'scan', msg: 'No ask-side liquidity on DEEP/SUI — waiting for depth' },
+  { type: 'policy', msg: 'SpendRecorded on-chain · amount_spent updated' },
+  { type: 'swap', msg: 'Reactive DCA: 0.25 SUI → 11 DEEP · slippage 0.3%' },
+  { type: 'scan', msg: 'Evaluating spread: 1.2% · score: 76 — monitoring' },
+  { type: 'policy', msg: 'Budget 0.75/1.00 SUI used · Move Policy ceiling OK' },
 ];
 
 const LOG_STYLE: Record<LogKind, { bg: string; color: string; label: string }> = {
@@ -44,12 +44,12 @@ const LOG_STYLE: Record<LogKind, { bg: string; color: string; label: string }> =
 };
 
 const AGENT_MSGS = [
-  'Scanning Deepbook order books…',
-  'Evaluating spread: 0.11% · SUI/USDC',
-  'Executing micro-strategy #51…',
-  'Waiting for optimal entry point…',
+  'Reading DEEP/SUI order book…',
+  'Spread: 0.82% · score 59 — evaluating…',
+  'Conditions met — executing Reactive DCA…',
+  'Waiting for ask-side liquidity…',
   'Policy ceiling check: OK',
-  'Placing limit order on CLOB…',
+  'agent_swap submitted to DeepBook…',
 ];
 
 /* ── Nav ──────────────────────────────────────────────────────────── */
@@ -252,7 +252,7 @@ function MobyPanel({
 
 /* ── Right panel (activity log + budget) ──────────────────────────── */
 function ActivityLog({ logs, budget }: { logs: DemoLog[]; budget: number }) {
-  const pct = Math.round((budget / 500) * 100);
+  const pct = Math.round((budget / 1.0) * 100);
   const barColor =
     pct > 60 ? 'var(--green)' : pct > 30 ? 'var(--orange)' : 'var(--red)';
 
@@ -293,7 +293,7 @@ function ActivityLog({ logs, budget }: { logs: DemoLog[]; budget: number }) {
               color: 'var(--ink)',
             }}
           >
-            {budget} / 500 USDC
+            {budget.toFixed(2)} / 1.00 SUI
           </span>
         </div>
         <div className="budget-bar-track">
@@ -335,13 +335,13 @@ function ActivityLog({ logs, budget }: { logs: DemoLog[]; budget: number }) {
 /* ── Animated demo command center ─────────────────────────────────── */
 function CommandCenterDemo() {
   const [revoked, setRevoked] = useState(false);
-  const [budget, setBudget] = useState(490);
+  const [budget, setBudget] = useState(0.75);
   const [eating, setEating] = useState(false);
   const [logs, setLogs] = useState<DemoLog[]>(() =>
     LOG_POOL.slice(0, 6).map((t, i) => ({ ...t, id: i })),
   );
 
-  const budgetRef = useRef(490);
+  const budgetRef = useRef(0.75);
   useEffect(() => {
     const prev = budgetRef.current;
     budgetRef.current = budget;
@@ -350,7 +350,7 @@ function CommandCenterDemo() {
         {
           id: Date.now(),
           type: 'policy',
-          msg: '⚠ Move Policy ceiling hit · 500/500 USDC consumed · Agent suspended',
+          msg: '⚠ Move Policy ceiling hit · 1.00/1.00 SUI consumed · Agent suspended',
         },
         ...p.slice(0, 7),
       ]);
@@ -364,7 +364,7 @@ function CommandCenterDemo() {
       const tpl = LOG_POOL[Math.floor(Math.random() * LOG_POOL.length)];
       setLogs((p) => [{ ...tpl, id: Date.now() }, ...p.slice(0, 8)]);
       if (tpl.type === 'swap') {
-        setBudget((p) => Math.max(p - Math.floor(Math.random() * 12 + 5), 0));
+        setBudget((p) => Math.max(+(p - (Math.random() * 0.05 + 0.2)).toFixed(3), 0));
       }
       if (tpl.type === 'swap' || tpl.type === 'limit') {
         setEating(true);
@@ -383,7 +383,7 @@ function CommandCenterDemo() {
       {
         id: Date.now(),
         type: 'policy',
-        msg: '⊗ REVOKE confirmed · Agent capability object destroyed on-chain',
+        msg: '⊗ REVOKE confirmed · policy is_active set to false · EPolicyRevoked enforced in Move',
       },
       ...p,
     ]);
@@ -393,7 +393,7 @@ function CommandCenterDemo() {
     <section className="lp-dashboard-wrap">
       <div style={{ marginBottom: 32 }}>
         <h2 className="section-h">
-          Moby, at work <Pill c="outline">Live demo</Pill>
+          Moby, at work <Pill c="outline">Simulated preview</Pill>
         </h2>
         <p className="section-sub">
           Watch the agent execute micro-strategies inside your ceiling, in real
@@ -460,9 +460,9 @@ const FEATS: Feat[] = [
     wide: true,
     tag: 'zkLogin',
     tagC: 'purple',
-    title: 'Social Login Compatible',
-    body: 'Moby supports zkLogin out of the box — users can authenticate with Google or Apple ID. No seed phrase, no browser extension required. The wallet is recoverable and non-custodial at the same time.',
-    meta: 'Zero-knowledge · Sui native',
+    title: 'zkLogin Ready',
+    body: "Moby's policy architecture is compatible with Sui zkLogin — enabling agent wallets with social login and no seed phrase. Planned for mainnet deployment.",
+    meta: 'Roadmap · Sui native',
   },
 ];
 
