@@ -27,7 +27,7 @@ export function LogRow({ entry, fresh = false }: LogRowProps) {
           href={txExplorerUrl(entry.digest)}
           target="_blank"
           rel="noopener noreferrer"
-          title="Verify this record_spend on Suiscan"
+          title="Verify this transaction on Suiscan"
           aria-label="View transaction on Suiscan"
         >
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">

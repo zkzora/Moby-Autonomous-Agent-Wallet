@@ -1,5 +1,6 @@
 import { MobyAgentProvider } from '../hooks/useMobyAgent';
 import { AutonomousAgent } from '../components/AutonomousAgent';
+import { SwapToast } from '../components/SwapToast';
 import { TopBar } from '../components/TopBar';
 import { Footer } from '../components/Footer';
 import { StatStrip } from '../components/StatStrip';
@@ -41,6 +42,7 @@ export default function Dashboard() {
 
           <Footer />
         </div>
+        <SwapToast />
       </MobyAgentProvider>
     </>
   );

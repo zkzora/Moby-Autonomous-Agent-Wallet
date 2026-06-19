@@ -116,9 +116,18 @@ export function useAutonomousAgent(): void {
         const res = await sui.signAndExecuteTransaction({
           signer: keypair,
           transaction: tx,
+          options: { showBalanceChanges: true },
         });
+        // Pull the DEEP received straight from the tx's balance changes (the
+        // positive DEEP delta) — no extra RPC, just richer execute options.
+        const deepDelta = res?.balanceChanges?.find(
+          (b) => b.coinType.endsWith('::deep::DEEP') && BigInt(b.amount) > 0n,
+        );
+        const amountOut = deepDelta
+          ? Number(BigInt(deepDelta.amount)) / 1e6
+          : undefined;
         // Announce the swap so the feed renders a SWAP row with the real amount.
-        publishSpend({ amountHuman: MIN_SWAP_SUI, digest: res?.digest });
+        publishSpend({ amountHuman: MIN_SWAP_SUI, amountOut, digest: res?.digest });
         fails.current = 0;
         // Read-after-write: block until the fullnode we read from has indexed
         // this tx, THEN refetch — otherwise the refetch reads the pre-swap

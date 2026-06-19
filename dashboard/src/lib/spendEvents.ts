@@ -8,8 +8,10 @@
  * on-chain `amount_spent` climb, which was unreliable).
  */
 export interface SpendEvent {
-  /** The exact clamped amount that hit `record_spend`, in human token units. */
+  /** The SUI amount that hit `agent_swap`, in human token units. */
   amountHuman: number;
+  /** DEEP received from the swap (human units), when known from the tx result. */
+  amountOut?: number;
   /** Transaction digest, for the Suiscan explorer link. */
   digest?: string;
 }

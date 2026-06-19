@@ -130,7 +130,7 @@ export function MobyAgentProvider({ children }: { children: ReactNode }) {
         {
           id: Date.now() * 1000 + Math.floor(Math.random() * 1000),
           type: 'swap' as LogType,
-          msg: `${phrase} · −${amountHuman.toLocaleString()} ${TOKEN_SYMBOL} · record_spend`,
+          msg: `${phrase} · −${amountHuman.toLocaleString()} ${TOKEN_SYMBOL} · agent_swap`,
           digest,
         },
         ...p.slice(0, 8),
@@ -178,7 +178,7 @@ export function MobyAgentProvider({ children }: { children: ReactNode }) {
         {
           id: Date.now(),
           type: 'policy' as LogType,
-          msg: '⚠ On-chain ceiling reached · record_spend exhausted · Moby resting',
+          msg: '⚠ On-chain budget spent · agent_swap exhausted · Moby resting',
         },
         ...p.slice(0, 7),
       ]);
