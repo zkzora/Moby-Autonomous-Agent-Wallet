@@ -114,8 +114,9 @@ export default function Docs() {
             <h2>Abstract</h2>
             <p>
               <strong>Moby</strong> is a non-custodial agent wallet on Sui. It
-              lets an autonomous AI agent run high-frequency micro-strategies on
-              Deepbook's central limit order book (CLOB) — yet the agent is{' '}
+              lets an autonomous AI agent execute a rule-based Reactive DCA
+              strategy on Deepbook's central limit order book (CLOB) — yet the
+              agent is{' '}
               <strong>mathematically incapable</strong> of moving a single unit
               beyond a ceiling you define. Authority is delegated through an
               on-chain <span className="pill pill-blue">Move Policy Object</span>,
