@@ -107,9 +107,9 @@ function Hero() {
       </h1>
 
       <p className="lp-hero-body">
-        Moby is a non-custodial agent wallet on Sui. It runs micro-strategies on
-        Deepbook's order book, bounded by Move Policy Objects you set, revocable
-        in a single on-chain transaction.
+        Moby is a non-custodial agent wallet on Sui. It runs a rule-based
+        Reactive DCA strategy on Deepbook's order book, bounded by Move Policy
+        Objects you set, revocable in a single on-chain transaction.
       </p>
 
       <div
@@ -396,8 +396,8 @@ function CommandCenterDemo() {
           Moby, at work <Pill c="outline">Simulated preview</Pill>
         </h2>
         <p className="section-sub">
-          Watch the agent execute micro-strategies inside your ceiling, in real
-          time. Tap the kill-switch to see instant on-chain revocation.
+          Watch the agent execute its Reactive DCA strategy inside your ceiling,
+          in real time. Tap the kill-switch to see instant on-chain revocation.
         </p>
       </div>
 
@@ -439,7 +439,7 @@ const FEATS: Feat[] = [
     tag: 'Move Objects',
     tagC: 'lime',
     title: 'Capped Budgeting',
-    body: 'A hard USDC or SUI ceiling encoded directly into a Move Policy Object on-chain. The agent is mathematically incapable of spending beyond it — no trust model, no exceptions.',
+    body: 'A hard SUI ceiling encoded directly into a Move Policy Object on-chain. The agent is mathematically incapable of spending beyond it — no trust model, no exceptions.',
     meta: 'Policy ceiling · Zero-trust enforcement',
   },
   {

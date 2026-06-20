@@ -3,10 +3,40 @@ import { useRotatingIndex } from '../hooks/useRotatingIndex';
 import { AGENT_MSGS } from '../lib/logData';
 import { AGENT_TEXT_INTERVAL_MS } from '../lib/constants';
 import { usePolicy } from '../providers/PolicyProvider';
+import { fromBaseUnits, TOKEN_SYMBOL } from '../lib/moby.config';
 import { AnimatedWhale } from './AnimatedWhale';
 import { Pill } from './Pill';
 import { PolicyForm } from './PolicyForm';
 import { PolicyActions } from './PolicyActions';
+
+/**
+ * Shown above the deploy form when the owner has a REVOKED policy that still
+ * holds escrowed SUI. Revoking only severs the agent (is_active=false) — it does
+ * not move funds, so the vault stays reclaimable. `close_policy` is owner-only
+ * and not gated by is_active, so the owner can always drain it back.
+ */
+function ReclaimBanner() {
+  const { policy, close, pending, error } = usePolicy();
+  if (!policy) return null;
+  const amt = fromBaseUnits(policy.vault);
+  return (
+    <div className="reclaim-banner">
+      <p className="exec-hint mono">
+        Agent revoked · <strong>{amt} {TOKEN_SYMBOL}</strong> still escrowed in the
+        old policy.
+      </p>
+      <button
+        type="button"
+        className="btn btn-solid"
+        onClick={() => void close()}
+        disabled={pending !== null}
+      >
+        {pending === 'close' ? 'Reclaiming…' : `Reclaim ${amt} ${TOKEN_SYMBOL}`}
+      </button>
+      {error && <p className="action-error">{error}</p>}
+    </div>
+  );
+}
 
 /** Status line content + colour for each lifecycle phase. */
 function useStatusLine() {
@@ -86,7 +116,7 @@ function AgentTank() {
  * also covers the pre-deployment and disconnected states.
  */
 export function MobyPanel() {
-  const { status } = usePolicy();
+  const { status, policy, isOwner } = usePolicy();
 
   if (status === 'loading') {
     return (
@@ -96,5 +126,17 @@ export function MobyPanel() {
     );
   }
 
-  return status === 'active' ? <AgentTank /> : <PolicyForm />;
+  if (status === 'active') return <AgentTank />;
+
+  // Revoked policy that still holds escrow → surface a reclaim path above the
+  // deploy form so the owner can recover funds before redeploying.
+  const showReclaim =
+    status === 'revoked' && isOwner && !!policy && policy.vault > 0n;
+
+  return (
+    <>
+      {showReclaim && <ReclaimBanner />}
+      <PolicyForm />
+    </>
+  );
 }

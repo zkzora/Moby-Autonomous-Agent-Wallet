@@ -2,8 +2,8 @@
 
 The dedicated dashboard for **Moby**, a non-custodial autonomous agent wallet on
 Sui (Sui Overflow 2025). It renders the live agent — Moby — executing
-micro-strategies on Deepbook's CLOB inside a Move Policy ceiling, with an
-on-chain kill-switch.
+a rule-based Reactive DCA strategy on Deepbook's CLOB inside a Move Policy
+ceiling, with an on-chain kill-switch.
 
 Built by extracting the `CommandCenter` / `MobyPanel` / `ActivityLog` logic from
 `landing-v2.html` into a modular React + TypeScript architecture, preserving the
@@ -52,8 +52,9 @@ npm run preview    # serve the build
   `agent_swap` aborts with `EPolicyRevoked`.
 - **`withdraw_unspent`** / **`close_policy`** let the owner reclaim escrowed
   SUI at any time — non-custodial by design.
-- Strategy: **Reactive DCA** — scores bid-ask spread 0–100, executes when
-  score ≥ 40, derives `min_base_out` from live best-ask (5% slippage floor).
+- Strategy: **Reactive DCA** — scores bid-ask spread 0–100, executes when the
+  spread is within the entry threshold (≤ 1.0%, i.e. score ≥ 50), deriving
+  `min_base_out` from the live best ask (10% slippage floor).
 
 ## Verified on-chain
 

@@ -718,6 +718,18 @@
   .stat-strip { grid-template-columns: 1fr; }
 }
 
+/* ── Reclaim banner (revoked policy still holding escrow) ────────────── */
+.reclaim-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-hi);
+  border-radius: 12px;
+}
+
 /* ── Swap success toast (bottom-right) ───────────────────────────────── */
 .swap-toast {
   position: fixed;
