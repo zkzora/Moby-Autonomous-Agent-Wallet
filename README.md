@@ -18,6 +18,74 @@
 
 ---
 
+## 🏗 Architecture
+
+```mermaid
+flowchart TD
+    A["Moby Client &amp; AI Brain Loop"]
+    B["1. Read Live Market State<br/>poll DeepBook DEEP/SUI order book<br/><br/>2. Compute Reactive DCA Strategy<br/>score spread 0-100, set min_base_out<br/><br/>3. Trigger Autonomous Taker Swap<br/>call agent_swap (no human signature)"]
+    C["Programmable Transaction Block (PTB)"]
+    D["Sui Testnet · Moby Move Contract<br/>(Package: 0x3b634f...)"]
+    E["Enforces 5 On-Chain Rules (agent_swap):<br/>• Agent-only authorization<br/>• Policy must be active<br/>• Expiry timestamp not reached<br/>• Correct DeepBook pool scope<br/>• Spending stays under budget ceiling"]
+    F["Atomic execution<br/>(if all 5 rules pass)"]
+    G["Sui DeepBook CLOB<br/>(Automated Liquidity Layer)"]
+    H["• Executes real taker swaps on-chain<br/>• Emits: OrderFilled + SpendRecorded events"]
+
+    A --> B
+    A --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+
+    classDef box fill:#3fb5f5,stroke:#2a9fd6,stroke-width:1px,color:#0a1726;
+    class A,B,C,D,E,F,G,H box;
+```
+
+<details>
+<summary>ASCII version (kalau Mermaid nggak ke-render)</summary>
+
+```
+┌─────────────────────────┐        ┌────────────────────────────────────────┐
+│  Moby Client &           │ ─────▶ │ 1. Read Live Market State                │
+│  AI Brain Loop           │        │    poll DeepBook DEEP/SUI order book      │
+└───────────┬─────────────┘        │ 2. Compute Reactive DCA Strategy          │
+            │                       │    score spread 0-100, set min_base_out   │
+            │                       │ 3. Trigger Autonomous Taker Swap          │
+            ▼                       │    call agent_swap (no human signature)   │
+┌─────────────────────────┐        └────────────────────────────────────────┘
+│ Programmable Transaction │
+│ Block (PTB)              │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐        ┌────────────────────────────────────────┐
+│ Sui Testnet ·            │ ─────▶ │ Enforces 5 On-Chain Rules (agent_swap):  │
+│ Moby Move Contract       │        │  - Agent-only authorization               │
+│ (Package: 0x3b634f...)   │        │  - Policy must be active                  │
+└─────────────────────────┘        │  - Expiry timestamp not reached           │
+                                    │  - Correct DeepBook pool scope            │
+                                    │  - Spending stays under budget ceiling    │
+                                    └─────────────────┬──────────────────────┘
+                                                      │
+                                                      ▼
+┌─────────────────────────┐        ┌────────────────────────────────────────┐
+│ Sui DeepBook CLOB        │ ◀───── │ Atomic execution                         │
+│ (Automated Liquidity)    │        │ (if all 5 rules pass)                    │
+└───────────┬─────────────┘        └────────────────────────────────────────┘
+            │
+            ▼
+┌──────────────────────────────────────┐
+│ - Executes real taker swaps on-chain  │
+│ - Emits: OrderFilled + SpendRecorded  │
+└──────────────────────────────────────┘
+```
+
+</details>
+
+---
+
 ## 📁 Repository Structure
 
 ```
